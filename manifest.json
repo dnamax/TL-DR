@@ -1,0 +1,19 @@
+{
+  "name": "TLDR",
+  "version": "1.0",
+  "description": "Add keywords to any webpage. Or, read them :)",
+  "browser_action": {
+    "default_icon": "icon.png",
+    "popup": "popup.html"
+  },
+  "permissions": [
+                  "tabs",
+    "http://ak.learningenterprises.org/tldr/"
+  ],
+  "content_scripts": [ {
+    "matches": ["http://*/*", "https://*/*"] ,
+    "js": [ "myscript.js" ]
+
+  }]
+
+}

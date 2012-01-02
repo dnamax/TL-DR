@@ -1,0 +1,170 @@
+<script src='jquery-1.7.1.min.js'></script>
+
+<style>
+body {
+  min-width:357px;
+  overflow-x:hidden;
+}
+img {
+  margin:5px;
+  vertical-align:middle;
+  width:14px;
+  height:14px;
+}
+</style>
+
+<!-- Keywords are entered here, comma separated -->
+ <form id="kwForm">
+    <input id="kwinput" name="kwinput" type="text"></input> <input id="kwSubmit" type="submit">
+    </form>
+<!-- This Div will contain results from the server -->
+<div id="kwDiv"></div>
+
+
+<script>
+    //////////////OPTIONS//////////////////
+    //WILL BE IN Chrome ext OPTIONS PAGE //
+    ///////////////////////////////////////
+    var STRIP_HASHLINKS = false;
+    
+    //////////////CONSTANTS////////////////
+    ///////////////////////////////////////
+    var script =   "http://ak.learningenterprises.org/tldr/tldr.php?";
+    var upvoteUrl = "http://ak.learningenterprises.org/tldr/upvote.php?";
+    var likedButton = 'star.gif';
+    var favouriteButton = 'check-icon.png';
+    
+    //storedLikes uses localStorage
+    var storedLikes=JSON.parse(localStorage['tldr-likes']);
+    //clear the badge at start
+    chrome.browserAction.setBadgeText({text: ''});
+    var url = "";
+    var locat = "";
+
+    //get a handle on the current selected tab
+    chrome.tabs.getSelected(null, function(tab) { locat=tab.url; myFunction(tab.url) });
+    function myFunction(tablink)
+    {
+        var kwDiv = document.getElementById("kwDiv");
+        var urlparams =   "url=" + escape( remove_trailing_slash( remove_hashlink( tablink ) ) ) ;
+        var urlUrl = script + urlparams;
+        console.log(url);
+        //perform initial ajax query and 
+        $(document).ready(function()
+                          {
+                            $.ajax({
+                                   type: "GET",
+                                   url: urlUrl, //this should actually be url, with an additional "data" param. Didn't know at that time...
+                                   dataType: "xml",
+                                   success: function (xml) { show(xml); }
+                          })
+        })
+        //handle submit button
+        $("#kwForm").submit(function(e) {
+                             var kwUrl = urlUrl + "&keywords=" + $("#kwinput").val();
+                             // stop normal link click
+                             e.preventDefault();
+                            //alert (kwUrl);
+                             // send request
+                            $.ajax({
+                                    type: "GET",
+                                    url: kwUrl, 
+                                    dataType: "xml",
+                                    success: function (xml) { show(xml); }
+                                   })
+        })
+        //handle image click
+        $(".kwLikeImg").live('click', function() {
+                            var kwid = $(this).attr("id");
+                             $(this).removeClass("kwLikeImg").addClass("kwLiked"); 
+                             $(this).attr("src",likedButton);
+                           //alert ("kwid is" + kwid);
+                            // stop normal link click
+           //                 e.preventDefault();
+                            // send request
+                            $.ajax({
+                                   type: "POST",
+                                   data: {kwid: kwid },
+                                   url: upvoteUrl, 
+                                   dataType: "html",
+                                   success: function (html) { 
+                                                                //alert(html);
+                                                                likeLocal(kwid);
+                                            }
+                                   })
+        })
+        //generate a list of keywords on server. Check to see whether user previously liked them. Print out each kw with either a check mark or star                    
+        function show(xml) {
+                                  $("#kwDiv").empty();
+                                  count = $(xml).find('keyword').filter(function () {
+                                                                                        return $(this).children().length === 0;
+                                                                                    }).length;
+                                  var counter = 0;
+                                  $(xml).find("keywords").each(function() {
+                                                                                          $(this).find("keyword").each(function()
+                                                                                          { 
+                                                                                            var kw = $(this).find("text").text();
+                                                                                            var kwid = $(this).find("id").text();
+                                                                                            if ( arrayContains( storedLikes,kwid ) )
+                                                                                            {
+                                                                                                $("#kwDiv").append(kw + "<img class=\"kwLiked\" id=\"" + kwid + "\" src=\"" + likedButton + "\">" + "<br>");
+                                                                                            }
+                                                                                            else
+                                                                                            {
+                                                                                                $("#kwDiv").append(kw + "<img class=\"kwLikeImg\" id=\"" + kwid + "\" src=\"" + favouriteButton + "\">" + "<br>");    
+                                                                                            }
+                                                                                            
+                                                                                            console.log(kw);
+                                                                                            counter++;
+                                                                                          })
+                                                                          })
+                                 chrome.browserAction.setBadgeText({text: counter + ''});
+                            }  
+        //store the local like on the client
+        function likeLocal(kwid) {
+            //Like on the server
+            //If this is not present in local storage, add it
+            if ( !arrayContains( storedLikes,kwid ) )
+            {
+              storedLikes.push(kwid);
+              localStorage['tldr-likes']=JSON.stringify(storedLikes);
+                //alert(storedLikes.join());
+            }
+        }
+ 
+    }//ready
+        //utility functions below
+        function remove_trailing_slash(str)
+        {
+            if(str.substr(-1) == '/') {
+                return str.substr(0, str.length - 1);
+            }
+            else
+            {
+                return str;
+            }
+        }
+        function remove_hashlink(str)
+        {
+            if (!STRIP_HASHLINKS)
+            {
+                return str;
+            }
+            if( str.indexOf('#') != -1 ) {
+                return str.substr(0,str.indexOf('#'));
+            }
+            else
+            {
+                return str;
+            }
+
+        }
+          function arrayContains(arr, obj) {
+          for(var i=0; i<arr.length; i++) {
+              if (arr[i] == obj) return true;
+          }
+      }
+        //that's all folks
+        
+</script>
+
