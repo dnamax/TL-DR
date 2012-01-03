@@ -1,3 +1,5 @@
+////////////////////////////NEED TO FIX LOCAL STORAGE 
+
 <script src='jquery-1.7.1.min.js'></script>
 
 <style>
@@ -20,7 +22,6 @@ img {
 <!-- This Div will contain results from the server -->
 <div id="kwDiv"></div>
 
-
 <script>
     //////////////OPTIONS//////////////////
     //WILL BE IN Chrome ext OPTIONS PAGE //
@@ -35,12 +36,18 @@ img {
     var favouriteButton = 'check-icon.png';
     
     //storedLikes uses localStorage
-    var storedLikes=JSON.parse(localStorage['tldr-likes']);
+    storedLikesString = localStorage.getItem('tldr-likes');
+    if (storedLikesString && storedLikesString.length > 0)
+    {
+        var storedLikes = JSON.parse(storedLikesString);
+    }
+//    var storedLikes=JSON.parse(localStorage['tldr-likes']);
+    
     //clear the badge at start
     chrome.browserAction.setBadgeText({text: ''});
     var url = "";
     var locat = "";
-
+ 
     //get a handle on the current selected tab
     chrome.tabs.getSelected(null, function(tab) { locat=tab.url; myFunction(tab.url) });
     function myFunction(tablink)
@@ -160,11 +167,13 @@ img {
 
         }
           function arrayContains(arr, obj) {
-          for(var i=0; i<arr.length; i++) {
+              if (!arr) {
+                return false;
+              }
+              for(var i=0; i<arr.length; i++) {
               if (arr[i] == obj) return true;
-          }
+            }
       }
         //that's all folks
         
 </script>
-

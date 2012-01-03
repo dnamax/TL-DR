@@ -1,6 +1,6 @@
 {
   "name": "TLDR",
-  "version": "1.0",
+  "version": "1.1",
   "description": "Add keywords to any webpage. Or, read them :)",
   "browser_action": {
     "default_icon": "icon.png",
@@ -13,7 +13,5 @@
   "content_scripts": [ {
     "matches": ["http://*/*", "https://*/*"] ,
     "js": [ "myscript.js" ]
-
   }]
-
 }
